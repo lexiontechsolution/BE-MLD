@@ -14,16 +14,46 @@ router.get('/', async (req, res) => {
     }
 });
 
+// GET single project
+router.get('/:id', async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+        if (!project) return res.status(404).json({ message: 'Project not found' });
+        res.json(project);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // POST new project with uploads
-router.post('/', upload.array('images', 10), async (req, res) => {
+router.post('/', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'documents', maxCount: 5 }]), async (req, res) => {
     try {
         const projectData = { ...req.body };
         
-        // If files were uploaded, add their paths to images array
-        if (req.files && req.files.length > 0) {
-            const uploadedImages = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
-            // Combine with any URL images sent in body if they exist
+        // Handle images
+        if (req.files['images']) {
+            const uploadedImages = req.files['images'].map(file => `http://localhost:5000/uploads/${file.filename}`);
             projectData.images = [...(projectData.images || []), ...uploadedImages];
+        }
+
+        // Handle documents
+        let initialDocs = [];
+        if (projectData.documentsData) {
+            try {
+                initialDocs = JSON.parse(projectData.documentsData);
+            } catch (e) {
+                console.error("Docs parse error", e);
+            }
+        }
+
+        if (req.files['documents']) {
+            const uploadedDocs = req.files['documents'].map(file => ({
+                title: file.originalname,
+                url: `http://localhost:5000/uploads/${file.filename}`
+            }));
+            projectData.documents = [...initialDocs, ...uploadedDocs];
+        } else {
+            projectData.documents = initialDocs;
         }
 
         const project = new Project(projectData);
@@ -35,21 +65,45 @@ router.post('/', upload.array('images', 10), async (req, res) => {
 });
 
 // PATCH update project with uploads
-router.patch('/:id', upload.array('images', 10), async (req, res) => {
+router.patch('/:id', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'documents', maxCount: 5 }]), async (req, res) => {
     try {
         const updateData = { ...req.body };
         
-        // Handle image mapping if files were uploaded
-        if (req.files && req.files.length > 0) {
-            const uploadedImages = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
-            // If images were sent as a string (from existing data), parse them
-            let currentImages = [];
-            if (typeof updateData.images === 'string') {
-                currentImages = [updateData.images];
-            } else if (Array.isArray(updateData.images)) {
-                currentImages = updateData.images;
-            }
+        // Handle image mapping
+        const imagesData = updateData['images[]'] || updateData.images;
+        let currentImages = [];
+        if (imagesData) {
+            currentImages = Array.isArray(imagesData) ? imagesData : [imagesData];
+        }
+
+        // Defensive check for files
+        const files = req.files || {};
+
+        if (files['images']) {
+            const uploadedImages = files['images'].map(file => `http://localhost:5000/uploads/${file.filename}`);
             updateData.images = [...currentImages, ...uploadedImages];
+        } else {
+            updateData.images = currentImages;
+        }
+
+        // Handle documents
+        let currentDocs = [];
+        try {
+            if (updateData.documentsData) {
+                currentDocs = typeof updateData.documentsData === 'string' ? JSON.parse(updateData.documentsData) : updateData.documentsData;
+            }
+        } catch (e) {
+            console.error("Docs parsing error", e);
+        }
+
+        if (files['documents']) {
+            const uploadedDocs = files['documents'].map(file => ({
+                title: file.originalname,
+                url: `http://localhost:5000/uploads/${file.filename}`
+            }));
+            updateData.documents = [...currentDocs, ...uploadedDocs];
+        } else {
+            updateData.documents = currentDocs;
         }
 
         const updated = await Project.findByIdAndUpdate(req.params.id, updateData, { new: true });

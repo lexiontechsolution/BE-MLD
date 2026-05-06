@@ -10,6 +10,10 @@ const propertySchema = new mongoose.Schema({
     bathrooms: { type: Number },
     sqft: { type: Number },
     images: [{ type: String }], // URLs to images
+    documents: [{ 
+        title: { type: String },
+        url: { type: String }
+    }], // PDF storage
     socialLink: { type: String }, // Optional virtual tour or social link 
     status: { type: String, enum: ['Ongoing', 'Upcoming', 'Completed'], default: 'Ongoing' },
     isFeatured: { type: Boolean, default: false },

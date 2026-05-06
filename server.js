@@ -51,6 +51,16 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/enquiries', enquiryRoutes);
 app.use('/api/blogs', blogRoutes);
 
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('--- INTERNAL SYSTEM ERROR ---');
+    console.error(err.stack);
+    res.status(500).json({ 
+        message: "Internal Server Error",
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined 
+    });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 System Online: Protocol active on port ${PORT}`);
