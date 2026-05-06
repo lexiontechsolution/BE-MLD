@@ -28,8 +28,8 @@ router.get('/:id', async (req, res) => {
 // CREATE blog
 router.post('/', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 10 }]), async (req, res) => {
     try {
-        const image = req.files['image'] ? `http://localhost:5000/uploads/${req.files['image'][0].filename}` : req.body.image;
-        const images = req.files['images'] ? req.files['images'].map(file => `http://localhost:5000/uploads/${file.filename}`) : [];
+        const image = req.files['image'] ? `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${req.files['image'][0].filename}` : req.body.image;
+        const images = req.files['images'] ? req.files['images'].map(file => `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`) : [];
 
         const blog = new Blog({
             ...req.body,
@@ -53,11 +53,11 @@ router.put('/:id', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'image
         const updateData = { ...req.body };
         
         if (req.files['image']) {
-            updateData.image = `http://localhost:5000/uploads/${req.files['image'][0].filename}`;
+            updateData.image = `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${req.files['image'][0].filename}`;
         }
         
         if (req.files['images']) {
-            updateData.images = req.files['images'].map(file => `http://localhost:5000/uploads/${file.filename}`);
+            updateData.images = req.files['images'].map(file => `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`);
         }
 
         const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, updateData, { new: true });

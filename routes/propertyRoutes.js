@@ -20,7 +20,7 @@ router.post('/', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'docum
         const propertyData = { ...req.body };
         
         if (req.files['images']) {
-            const uploadedImages = req.files['images'].map(file => `http://localhost:5000/uploads/${file.filename}`);
+            const uploadedImages = req.files['images'].map(file => `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`);
             propertyData.images = [...(propertyData.images || []), ...uploadedImages];
         }
 
@@ -37,7 +37,7 @@ router.post('/', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'docum
         if (req.files['documents']) {
             const uploadedDocs = req.files['documents'].map(file => ({
                 title: file.originalname,
-                url: `http://localhost:5000/uploads/${file.filename}`
+                url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`
             }));
             propertyData.documents = [...initialDocs, ...uploadedDocs];
         } else {
@@ -68,7 +68,7 @@ router.patch('/:id', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'd
         const files = req.files || {};
 
         if (files['images']) {
-            const uploadedImages = files['images'].map(file => `http://localhost:5000/uploads/${file.filename}`);
+            const uploadedImages = files['images'].map(file => `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`);
             updateData.images = [...currentImages, ...uploadedImages];
         } else {
             updateData.images = currentImages;
@@ -87,7 +87,7 @@ router.patch('/:id', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'd
         if (files['documents']) {
             const uploadedDocs = files['documents'].map(file => ({
                 title: file.originalname,
-                url: `http://localhost:5000/uploads/${file.filename}`
+                url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`
             }));
             updateData.documents = [...currentDocs, ...uploadedDocs];
         } else {
